@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "Command line tool for OpenClaw to dispatch tasks to OpenCode with async callback support",
   "type": "module",
+  "main": "./dist/index.js",
   "bin": {
     "openclaw-opencode": "./bin/openclaw-opencode"
   },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

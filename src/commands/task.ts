@@ -69,7 +69,7 @@ export const taskCommand = new Command("task")
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       } else {
-        // 非阻塞模式：向插件注册回调
+        // Non-blocking mode: register callback with plugin
         const callbackUrl = options.callbackUrl || process.env.OPENCLAW_CALLBACK_URL;
         if (callbackUrl) {
           try {

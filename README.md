@@ -1,43 +1,43 @@
 # OpenClaw ↔ OpenCode CLI Bridge
 
-命令行工具，让 OpenClaw 可以发送任务给 OpenCode 并接收异步回调。
+A command line tool that allows OpenClaw to dispatch tasks to OpenCode and receive asynchronous callbacks.
 
-## 功能特性
+## Features
 
-- 🔗 **远程/本地双模式**: 支持连接远程 OpenCode 服务器或本地安装
-- ⚡ **非阻塞执行**: 任务异步执行，完成后自动回调 OpenClaw
-- 📊 **任务管理**: 查看任务状态、历史记录
-- 🔒 **安全认证**: 支持 HTTP Basic Auth 和 Bearer Token
-- 📝 **丰富帮助**: 详细的帮助信息和示例
+- 🔗 **Remote/Local Dual Mode**: Supports connecting to remote OpenCode servers or local installations
+- ⚡ **Non-blocking Execution**: Tasks execute asynchronously with automatic callbacks to OpenClaw upon completion
+- 📊 **Task Management**: View task status and history
+- 🔒 **Secure Authentication**: Supports HTTP Basic Auth and Bearer Token
+- 📝 **Rich Help**: Detailed help information and examples
 
-## 为OpenClaw安装
+## Installation for OpenClaw
 
 ```bash
 npm install -g @laceletho/openclaw-opencode-cli
 ```
 
-## 快速开始
+## Quick Start
 
-### 1. 配置环境变量
+### 1. Configure Environment Variables
 
-**远程模式** :
+**Remote Mode**:
 
-#### 在 OpenClaw 环境设置（运行 CLI 的地方）
+#### In OpenClaw Environment (where CLI runs)
 ```bash
-# 连接 OpenCode 服务器（远程模式）
+# Connect to OpenCode server (remote mode)
 export OPENCODE_URL=https://your-opencode-server.com
 export OPENCODE_PASSWORD=your-password
 ```
 
-#### 在 OpenCode 环境设置（OpenCode 服务器运行的环境）
+#### In OpenCode Environment (where OpenCode server runs)
 
-**前提**：需要在 OpenCode 服务器上安装并启用 [`@laceletho/plugin-openclaw`](https://www.npmjs.com/package/@laceletho/plugin-openclaw) 插件，回调功能才能正常工作。
+**Prerequisite**: You need to install and enable the [`@laceletho/plugin-openclaw`](https://www.npmjs.com/package/@laceletho/plugin-openclaw) plugin on the OpenCode server for callbacks to work properly.
 
 ```bash
-# 安装插件
+# Install the plugin
 npm install @laceletho/plugin-openclaw
 
-# 在 opencode.json 中启用插件
+# Enable the plugin in opencode.json
 {
   "plugins": ["@laceletho/plugin-openclaw"],
   "openclaw": {
@@ -47,98 +47,98 @@ npm install @laceletho/plugin-openclaw
 }
 ```
 
-插件默认监听 9090 端口接收回调注册请求。
+The plugin listens on port 9090 by default to receive callback registration requests.
 
-**本地模式** :
+**Local Mode**:
 ```bash
-# 只需安装 OpenCode
+# Just install OpenCode
 curl -fsSL https://opencode.ai/install | bash
 ```
 
-### 2. 发送任务
+### 2. Dispatch Tasks
 
 ```bash
-# 非阻塞模式 (默认) - 返回 taskId，后台执行，完成后回调 OpenClaw
+# Non-blocking mode (default) - Returns taskId, executes in background, callbacks OpenClaw when done
 openclaw-opencode task "Write a Python function to calculate fibonacci"
 
-# 阻塞模式 (等待完成) - 实时等待，结果输出到终端，不发送回调
+# Blocking mode (wait for completion) - Waits in real-time, outputs result to terminal, no callback sent
 openclaw-opencode task "Create a React component" --wait
 ```
 
-### 3. 查看任务状态
+### 3. Check Task Status
 
 ```bash
-# 查看特定任务
+# Check specific task
 openclaw-opencode status task-1234567890-abc12
 
-# 列出所有任务
+# List all tasks
 openclaw-opencode list
 ```
 
-## 命令详解
+## Command Reference
 
-### `task` - 发送任务
+### `task` - Dispatch a Task
 
 ```bash
 openclaw-opencode task <prompt> [options]
 ```
 
-**参数:**
-- `prompt` - 要发送给 OpenCode 的任务描述
+**Arguments:**
+- `prompt` - Task description to send to OpenCode
 
-**选项:**
-- `-c, --callback-url <url>` - OpenClaw 回调 URL
-- `-a, --agent-id <id>` - OpenClaw Agent ID (默认: main)
-- `--channel <channel>` - 消息投递频道 (默认: last)
-- `--no-deliver` - 不投递到消息频道
-- `-d, --directory <dir>` - 工作目录
-- `-w, --wait` - 阻塞模式等待完成
-- `-t, --timeout <minutes>` - 超时时间 (默认: 30)
+**Options:**
+- `-c, --callback-url <url>` - OpenClaw callback URL
+- `-a, --agent-id <id>` - OpenClaw Agent ID (default: main)
+- `--channel <channel>` - Message delivery channel (default: last)
+- `--no-deliver` - Do not deliver to messaging channel
+- `-d, --directory <dir>` - Working directory
+- `-w, --wait` - Wait for task completion in blocking mode
+- `-t, --timeout <minutes>` - Timeout in minutes (default: 30)
 
-**示例:**
+**Examples:**
 ```bash
 openclaw-opencode task "Write tests for this file" --wait
 openclaw-opencode task "Review code" --agent-id reviewer --channel slack
 ```
 
-### `status` - 查看任务状态
+### `status` - Check Task Status
 
 ```bash
 openclaw-opencode status <taskId>
 ```
 
-### `list` - 列出所有任务
+### `list` - List All Tasks
 
 ```bash
 openclaw-opencode list
-openclaw-opencode list --clear  # 清除已完成任务
+openclaw-opencode list --clear  # Clear completed tasks
 ```
 
-## 环境变量
+## Environment Variables
 
-| 变量 | 设置位置 | 必需 | 默认值 | 说明 |
-|------|----------|------|--------|------|
-| `OPENCODE_URL` | **OpenClaw 环境** | 远程模式 | - | OpenCode 服务器 URL |
-| `OPENCODE_PASSWORD` | **OpenClaw 环境** | 远程模式 | - | HTTP Basic Auth 密码 |
-| `OPENCODE_USERNAME` | **OpenClaw 环境** | 否 | opencode | HTTP Basic Auth 用户名 |
-| `OPENCLAW_CALLBACK_URL` | **OpenCode 环境** | 否 | http://localhost:18789/hooks/agent | OpenClaw 回调地址 |
-| `OPENCLAW_API_KEY` | **OpenCode 环境** | 否 | - | OpenClaw 认证 Token |
-| `OPENCLAW_AGENT_ID` | **OpenClaw 环境** | 否 | main | 目标 Agent ID |
-| `OPENCLAW_CHANNEL` | **OpenClaw 环境** | 否 | last | 投递频道 |
-| `OPENCLAW_DELIVER` | **OpenClaw 环境** | 否 | true | 是否投递到消息频道 |
+| Variable | Setup Location | Required | Default | Description |
+|----------|---------------|----------|---------|-------------|
+| `OPENCODE_URL` | **OpenClaw Environment** | Remote mode | - | OpenCode server URL |
+| `OPENCODE_PASSWORD` | **OpenClaw Environment** | Remote mode | - | HTTP Basic Auth password |
+| `OPENCODE_USERNAME` | **OpenClaw Environment** | No | opencode | HTTP Basic Auth username |
+| `OPENCLAW_CALLBACK_URL` | **OpenCode Environment** | No | http://localhost:18789/hooks/agent | OpenClaw callback address |
+| `OPENCLAW_API_KEY` | **OpenCode Environment** | No | - | OpenClaw authentication token |
+| `OPENCLAW_AGENT_ID` | **OpenClaw Environment** | No | main | Target Agent ID |
+| `OPENCLAW_CHANNEL` | **OpenClaw Environment** | No | last | Delivery channel |
+| `OPENCLAW_DELIVER` | **OpenClaw Environment** | No | true | Whether to deliver to messaging channel |
 
-**注意**：`OPENCLAW_*` 回调相关变量仅在**非阻塞模式**（默认）下生效。阻塞模式（`--wait`）下任务结果直接输出到终端，不发送回调。
+**Note**: `OPENCLAW_*` callback-related variables only take effect in **non-blocking mode** (default). In blocking mode (`--wait`), task results are output directly to the terminal without sending callbacks.
 
-**工作原理**：
-1. CLI 创建 session 后，非阻塞模式下会向插件的 `/register` 端点注册回调信息
-2. 插件订阅 OpenCode 的 `session.updated` 事件
-3. 当 session 完成（`completed` 或 `failed`）时，插件自动发送回调到 OpenClaw
+**How It Works**:
+1. After the CLI creates a session, in non-blocking mode it registers callback info with the plugin's `/register` endpoint
+2. The plugin subscribes to OpenCode's `session.updated` event
+3. When the session completes (`completed` or `failed`), the plugin automatically sends a callback to OpenClaw
 
-## OpenClaw 集成
+## OpenClaw Integration
 
-### 1. 配置 OpenClaw Hooks
+### 1. Configure OpenClaw Hooks
 
-在 `~/.openclaw/openclaw.json` 中启用 hooks:
+Enable hooks in `~/.openclaw/openclaw.json`:
 
 ```json
 {
@@ -151,15 +151,15 @@ openclaw-opencode list --clear  # 清除已完成任务
 }
 ```
 
-### 2. 在 OpenCode 环境配置插件
+### 2. Configure Plugin in OpenCode Environment
 
-确保已在 OpenCode 服务器上安装并启用 `@laceletho/plugin-openclaw` 插件：
+Make sure the `@laceletho/plugin-openclaw` plugin is installed and enabled on the OpenCode server:
 
 ```bash
-# 安装插件
+# Install the plugin
 npm install @laceletho/plugin-openclaw
 
-# 在 opencode.json 中启用
+# Enable in opencode.json
 {
   "plugins": ["@laceletho/plugin-openclaw"],
   "openclaw": {
@@ -168,14 +168,14 @@ npm install @laceletho/plugin-openclaw
 }
 ```
 
-插件会自动：
-1. 启动 HTTP 服务器（默认 9090 端口）接收回调注册
-2. 订阅 OpenCode 的 `session.updated` 事件
-3. 在 session 完成时发送回调到 OpenClaw
+The plugin will automatically:
+1. Start an HTTP server (default port 9090) to receive callback registrations
+2. Subscribe to OpenCode's `session.updated` event
+3. Send callbacks to OpenClaw when sessions complete
 
-### 3. 任务完成回调
+### 3. Task Completion Callback
 
-非阻塞模式下，CLI 会向插件注册回调，当 OpenCode session 完成时，插件自动触发回调：
+In non-blocking mode, the CLI registers a callback with the plugin. When the OpenCode session completes, the plugin automatically triggers the callback:
 
 ```json
 {
@@ -188,7 +188,7 @@ npm install @laceletho/plugin-openclaw
 }
 ```
 
-## 架构
+## Architecture
 
 ```
 ┌─────────────┐      task dispatch      ┌─────────────┐
@@ -205,22 +205,22 @@ npm install @laceletho/plugin-openclaw
                     └──────────────┘
 ```
 
-## 开发
+## Development
 
 ```bash
-# 安装依赖
+# Install dependencies
 npm install
 
-# 开发模式
+# Development mode
 npm run dev
 
-# 构建
+# Build
 npm run build
 
-# 类型检查
+# Type check
 npm run typecheck
 ```
 
-## 许可证
+## License
 
 MIT

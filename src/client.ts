@@ -109,14 +109,14 @@ export interface CallbackConfig {
 }
 
 /**
- * 向 OpenCode 插件注册回调配置
- * 插件会通过订阅 session.updated 事件来触发回调
+ * Register callback configuration with the OpenCode plugin
+ * The plugin triggers callbacks by subscribing to session.updated events
  */
 export async function registerCallback(
   sessionId: string,
   config: CallbackConfig
 ): Promise<void> {
-  // 插件 HTTP 服务器默认运行在 9090 端口
+  // Plugin HTTP server runs on port 9090 by default
   const pluginUrl = process.env.OPENCODE_PLUGIN_URL || "http://localhost:9090";
 
   try {
@@ -138,7 +138,7 @@ export async function registerCallback(
 
     console.log("Callback registered with plugin");
   } catch (error) {
-    // 如果插件未运行，给出明确的错误提示
+    // Provide clear error message if plugin is not running
     if (error instanceof TypeError && error.message.includes("fetch failed")) {
       throw new Error(
         "Failed to connect to opencode-plugin-openclaw. " +
