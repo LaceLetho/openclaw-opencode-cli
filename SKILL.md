@@ -102,10 +102,11 @@ export OPENCLAW_API_KEY=your-shared-secret-token
 export OPENCLAW_AGENT_ID=main
 export OPENCLAW_CHANNEL=last
 export OPENCLAW_DELIVER=true
-
-# Plugin URL (default: http://localhost:9090)
-export OPENCODE_PLUGIN_URL=http://localhost:9090
 ```
+
+**Note:** The CLI automatically derives the Plugin URL from `OPENCODE_URL` by replacing the port with `9090`.
+- If `OPENCODE_URL=https://server.com:4096`, plugin URL becomes `https://server.com:9090`
+- For local development, it defaults to `http://localhost:9090`
 
 ## How It Works
 

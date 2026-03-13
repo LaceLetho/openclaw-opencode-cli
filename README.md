@@ -175,7 +175,7 @@ openclaw-opencode list --clear  # Clear completed tasks
 
 | Variable | Setup Location | Required | Default | Description |
 |----------|---------------|----------|---------|-------------|
-| `OPENCODE_URL` | **OpenClaw Environment** | Remote mode | - | OpenCode server URL |
+| `OPENCODE_URL` | **OpenClaw Environment** | Remote mode | - | OpenCode server URL (plugin URL auto-derived from this) |
 | `OPENCODE_PASSWORD` | **OpenClaw Environment** | Remote mode | - | HTTP Basic Auth password |
 | `OPENCODE_USERNAME` | **OpenClaw Environment** | No | opencode | HTTP Basic Auth username |
 | `OPENCLAW_CALLBACK_URL` | **OpenCode Environment** | No | http://localhost:18789/hooks/agent | OpenClaw callback address |
@@ -183,6 +183,11 @@ openclaw-opencode list --clear  # Clear completed tasks
 | `OPENCLAW_AGENT_ID` | **OpenClaw Environment** | No | main | Target Agent ID |
 | `OPENCLAW_CHANNEL` | **OpenClaw Environment** | No | last | Delivery channel |
 | `OPENCLAW_DELIVER` | **OpenClaw Environment** | No | true | Whether to deliver to messaging channel |
+
+**Plugin URL Auto-Derivation:**
+The CLI automatically derives the plugin URL from `OPENCODE_URL` by replacing the port with `9090`:
+- `OPENCODE_URL=https://server.com:4096` → Plugin URL: `https://server.com:9090`
+- For local development, defaults to `http://localhost:9090`
 
 **Note**: `OPENCLAW_*` callback-related variables only take effect in **non-blocking mode** (default). In blocking mode (`--wait`), task results are output directly to the terminal without sending callbacks.
 

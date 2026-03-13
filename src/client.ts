@@ -121,6 +121,33 @@ export interface CallbackConfig {
 }
 
 /**
+ * Derive plugin URL from OPENCODE_URL
+ * Example: https://server.com:4096 -> https://server.com:9090
+ */
+function getPluginUrl(): string {
+  // Use explicit plugin URL if set
+  if (process.env.OPENCODE_PLUGIN_URL) {
+    return process.env.OPENCODE_PLUGIN_URL;
+  }
+
+  // Derive from OPENCODE_URL
+  const opencodeUrl = process.env.OPENCODE_URL;
+  if (!opencodeUrl) {
+    return "http://localhost:9090";
+  }
+
+  try {
+    const url = new URL(opencodeUrl);
+    // Replace port with 9090 (default plugin port)
+    url.port = "9090";
+    return url.toString().replace(/\/$/, ""); // Remove trailing slash
+  } catch {
+    // Fallback to localhost if URL parsing fails
+    return "http://localhost:9090";
+  }
+}
+
+/**
  * Register callback configuration with the OpenCode plugin
  * The plugin triggers callbacks by subscribing to session.updated events
  */
@@ -128,8 +155,7 @@ export async function registerCallback(
   sessionId: string,
   config: CallbackConfig
 ): Promise<void> {
-  // Plugin HTTP server runs on port 9090 by default
-  const pluginUrl = process.env.OPENCODE_PLUGIN_URL || "http://localhost:9090";
+  const pluginUrl = getPluginUrl();
 
   try {
     const response = await fetch(`${pluginUrl}/register`, {
