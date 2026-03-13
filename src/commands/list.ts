@@ -1,18 +1,24 @@
 import { Command } from "commander";
 import { listTasks, clearCompletedTasks } from "../utils/store.js";
+import { logger } from "../utils/logger.js";
 
 export const listCommand = new Command("list")
   .description("List all tasks")
   .option("--clear", "Clear completed tasks")
   .action((options) => {
     try {
+      logger.info("List command started", { clear: options.clear });
+
       if (options.clear) {
         const cleared = clearCompletedTasks();
+        logger.info("Cleared completed tasks", { cleared });
         console.log(`Cleared ${cleared} completed tasks`);
         return;
       }
 
       const tasks = listTasks();
+
+      logger.info("Tasks listed", { total: tasks.length });
 
       if (tasks.length === 0) {
         console.log("No tasks found");
@@ -32,7 +38,9 @@ export const listCommand = new Command("list")
         console.log();
       });
     } catch (error) {
-      console.error("Error:", error instanceof Error ? error.message : error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error("List command failed", { error: errorMessage });
+      console.error("Error:", errorMessage);
       process.exit(1);
     }
   });

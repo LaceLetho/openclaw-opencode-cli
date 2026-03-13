@@ -146,6 +146,7 @@ This CLI runs in the **OpenClaw environment** and communicates with OpenCode:
 | `OPENCLAW_CALLBACK_URL` | No | - | OpenClaw callback URL |
 | `OPENCLAW_API_KEY` | No | - | OpenClaw authentication token |
 | `OPENCLAW_AGENT_ID` | No | `main` | Target Agent ID |
+| `LOG_LEVEL` | No | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
 
 ## Session Persistence
 
@@ -155,6 +156,39 @@ Sessions are persisted locally:
 - **Windows**: `%USERPROFILE%\.@laceletho-openclaw-opencode-cli\session.json`
 
 First `task` creates a session and saves it. Subsequent tasks reuse the saved session. Use `--new-session` to create a new one.
+
+## Logging
+
+The CLI outputs structured logs to stdout/stderr for debugging and monitoring:
+
+### Log Levels
+
+Set `LOG_LEVEL` environment variable to control verbosity:
+
+```bash
+# Debug mode - detailed logs for troubleshooting
+export LOG_LEVEL=debug
+openclaw-opencode task "Create a React app"
+
+# Info mode (default) - key events only
+export LOG_LEVEL=info
+openclaw-opencode task "Create a React app"
+
+# Error mode - errors only
+export LOG_LEVEL=error
+```
+
+### Log Format
+
+```
+2025-03-13T10:30:45.123Z [openclaw-opencode] [INFO] Task dispatched {"taskId":"sess_abc123","isNewSession":true}
+2025-03-13T10:30:45.234Z [openclaw-opencode] [INFO] Session created {"sessionId":"sess_abc123","duration":89}
+2025-03-13T10:30:45.456Z [openclaw-opencode] [INFO] Callback registered {"sessionId":"sess_abc123","callbackUrl":"http://localhost:18789/hooks/agent"}
+```
+
+### Railway Dashboard
+
+Logs are automatically captured by Railway. View them in your project's **Observability** tab.
 
 ## Development
 
