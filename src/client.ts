@@ -87,10 +87,8 @@ export async function dispatchTask(
   const promptStart = Date.now();
 
   const promptResult = await client.session.prompt({
-    path: { sessionID: sessionId } as any,
-    body: {
-      parts: [{ type: "text", text: prompt }],
-    },
+    sessionID: sessionId,
+    parts: [{ type: "text", text: prompt }],
   } as any);
 
   logger.http("POST", `/session/${sessionId}/prompt`, promptResult.error ? 500 : 200, Date.now() - promptStart);
