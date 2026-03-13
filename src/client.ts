@@ -34,25 +34,36 @@ export function createClient(config: OpenCodeConfig): OpencodeClient {
 export async function dispatchTask(
   client: OpencodeClient,
   prompt: string,
-  options?: { directory?: string }
-): Promise<{ sessionId: string; taskId: string }> {
-  // Create session first
-  const createResult = await client.session.create({
-    query: options?.directory ? { directory: options.directory } : undefined,
-  });
+  options?: { directory?: string; existingSessionId?: string }
+): Promise<{ sessionId: string; taskId: string; isNewSession: boolean }> {
+  let sessionId: string;
+  let isNewSession = false;
 
-  if (createResult.error) {
-    throw new Error(`Failed to create session: ${createResult.error}`);
-  }
+  if (options?.existingSessionId) {
+    // Reuse existing session
+    sessionId = options.existingSessionId;
+  } else {
+    // Create new session
+    const createResult = await client.session.create({
+      query: options?.directory ? { directory: options.directory } : undefined,
+    });
 
-  const session = createResult.data;
-  if (!session) {
-    throw new Error("Failed to create session: no data returned");
+    if (createResult.error) {
+      throw new Error(`Failed to create session: ${createResult.error}`);
+    }
+
+    const session = createResult.data;
+    if (!session) {
+      throw new Error("Failed to create session: no data returned");
+    }
+
+    sessionId = session.id;
+    isNewSession = true;
   }
 
   // Send prompt to the session
   const promptResult = await client.session.prompt({
-    path: { id: session.id },
+    path: { id: sessionId },
     body: {
       parts: [{ type: "text", text: prompt }],
     },
@@ -63,8 +74,9 @@ export async function dispatchTask(
   }
 
   return {
-    sessionId: session.id,
-    taskId: session.id,
+    sessionId: sessionId,
+    taskId: sessionId,
+    isNewSession: isNewSession,
   };
 }
 

@@ -15,6 +15,7 @@ export interface Task {
 
 const STORE_DIR = join(homedir(), ".@laceletho-openclaw-opencode-cli")
 const STORE_FILE = join(STORE_DIR, "tasks.json")
+const SESSION_FILE = join(STORE_DIR, "session.json")
 
 function ensureStore(): void {
   if (!existsSync(STORE_DIR)) {
@@ -87,4 +88,54 @@ export function clearCompletedTasks(): number {
   const activeTasks = tasks.filter(t => t.status !== "completed" && t.status !== "failed")
   writeStore(activeTasks)
   return initialCount - activeTasks.length
+}
+
+// Session management
+export interface SessionInfo {
+  sessionId: string
+  directory?: string
+  createdAt: Date
+}
+
+function readSessionStore(): SessionInfo | null {
+  ensureStore()
+
+  if (!existsSync(SESSION_FILE)) {
+    return null
+  }
+
+  try {
+    const data = JSON.parse(readFileSync(SESSION_FILE, "utf-8"))
+    return {
+      ...data,
+      createdAt: new Date(data.createdAt)
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeSessionStore(session: SessionInfo | null): void {
+  ensureStore()
+  if (session) {
+    writeFileSync(SESSION_FILE, JSON.stringify(session, null, 2))
+  } else {
+    writeFileSync(SESSION_FILE, JSON.stringify({}))
+  }
+}
+
+export function getActiveSession(): SessionInfo | null {
+  return readSessionStore()
+}
+
+export function setActiveSession(sessionId: string, directory?: string): void {
+  writeSessionStore({
+    sessionId,
+    directory,
+    createdAt: new Date()
+  })
+}
+
+export function clearActiveSession(): void {
+  writeSessionStore(null)
 }

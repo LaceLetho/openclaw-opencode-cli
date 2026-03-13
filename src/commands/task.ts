@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { createClient, dispatchTask, registerCallback } from "../client.js";
-import { storeTask } from "../utils/store.js";
+import { storeTask, getActiveSession, setActiveSession, clearActiveSession } from "../utils/store.js";
 
 export const taskCommand = new Command("task")
   .description("Dispatch a task to OpenCode")
@@ -12,6 +12,7 @@ export const taskCommand = new Command("task")
   .option("-d, --directory <dir>", "Working directory")
   .option("-w, --wait", "Wait for task completion (blocking mode)")
   .option("-t, --timeout <minutes>", "Timeout in minutes", "30")
+  .option("-n, --new-session", "Create a new session and use it for future tasks")
   .action(async (prompt: string, options) => {
     try {
       const client = createClient({
@@ -20,11 +21,35 @@ export const taskCommand = new Command("task")
         password: process.env.OPENCODE_PASSWORD,
       });
 
+      // Check for active session
+      const activeSession = getActiveSession();
+      let existingSessionId: string | undefined;
+
+      if (!options.newSession && activeSession) {
+        // Check if directory matches
+        if (options.directory && activeSession.directory !== options.directory) {
+          console.log(`Directory mismatch. Current session uses "${activeSession.directory}", but you specified "${options.directory}".`);
+          console.log("Creating new session for this directory...");
+        } else {
+          existingSessionId = activeSession.sessionId;
+          console.log(`Reusing existing session: ${existingSessionId}`);
+        }
+      }
+
       console.log("Dispatching task to OpenCode...");
 
-      const { sessionId, taskId } = await dispatchTask(client, prompt, {
+      const { sessionId, taskId, isNewSession } = await dispatchTask(client, prompt, {
         directory: options.directory,
+        existingSessionId,
       });
+
+      // Save session if it's new or we're explicitly creating a new one
+      if (isNewSession || options.newSession) {
+        setActiveSession(sessionId, options.directory);
+        if (options.newSession) {
+          console.log(`Created new session: ${sessionId}`);
+        }
+      }
 
       storeTask({
         taskId,

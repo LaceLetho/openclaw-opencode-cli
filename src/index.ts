@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { taskCommand } from "./commands/task.js";
 import { statusCommand } from "./commands/status.js";
 import { listCommand } from "./commands/list.js";
+import { sessionCommand } from "./commands/session.js";
 import { getHelpText, getExamplesText } from "./utils/help.js";
 
 const program = new Command();
@@ -19,5 +20,6 @@ program
 program.addCommand(taskCommand);
 program.addCommand(statusCommand);
 program.addCommand(listCommand);
+program.addCommand(sessionCommand);
 
 program.parse();

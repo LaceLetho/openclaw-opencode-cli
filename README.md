@@ -6,6 +6,7 @@ A command line tool that allows OpenClaw to dispatch tasks to OpenCode and recei
 
 - 🔗 **Remote/Local Dual Mode**: Supports connecting to remote OpenCode servers or local installations
 - ⚡ **Non-blocking Execution**: Tasks execute asynchronously with automatic callbacks to OpenClaw upon completion
+- 🔄 **Session Persistence**: Multiple tasks reuse the same session for context continuity
 - 📊 **Task Management**: View task status and history
 - 🔒 **Secure Authentication**: Supports HTTP Basic Auth and Bearer Token
 - 📝 **Rich Help**: Detailed help information and examples
@@ -57,6 +58,24 @@ curl -fsSL https://opencode.ai/install | bash
 
 ### 2. Dispatch Tasks
 
+**Session Management:**
+
+By default, multiple `task` commands reuse the same OpenCode session, maintaining context across tasks:
+
+```bash
+# First task creates a new session
+openclaw-opencode task "Create a new Express.js app"
+
+# Subsequent tasks reuse the same session (with context from previous tasks)
+openclaw-opencode task "Add authentication middleware"
+openclaw-opencode task "Create user routes"
+
+# Create a new session when you want a fresh context
+openclaw-opencode task "Start a new Python project" --new-session
+```
+
+**Blocking vs Non-blocking:**
+
 ```bash
 # Non-blocking mode (default) - Returns taskId, executes in background, callbacks OpenClaw when done
 openclaw-opencode task "Write a Python function to calculate fibonacci"
@@ -65,7 +84,17 @@ openclaw-opencode task "Write a Python function to calculate fibonacci"
 openclaw-opencode task "Create a React component" --wait
 ```
 
-### 3. Check Task Status
+### 3. Manage Sessions
+
+```bash
+# View current active session
+openclaw-opencode session
+
+# Clear active session (next task will create a new one)
+openclaw-opencode session --clear
+```
+
+### 4. Check Task Status
 
 ```bash
 # Check specific task
@@ -94,11 +123,39 @@ openclaw-opencode task <prompt> [options]
 - `-d, --directory <dir>` - Working directory
 - `-w, --wait` - Wait for task completion in blocking mode
 - `-t, --timeout <minutes>` - Timeout in minutes (default: 30)
+- `-n, --new-session` - Create a new session and use it for future tasks
 
 **Examples:**
 ```bash
+# Reuse existing session (default)
 openclaw-opencode task "Write tests for this file" --wait
-openclaw-opencode task "Review code" --agent-id reviewer --channel slack
+
+# Create a new session
+openclaw-opencode task "Review code" --new-session --agent-id reviewer --channel slack
+
+# Chain related tasks in the same session
+openclaw-opencode task "Create a user model"
+openclaw-opencode task "Add authentication using that model"
+```
+
+### `session` - Manage Active Session
+
+View or clear the active session used for task dispatch.
+
+```bash
+openclaw-opencode session [options]
+```
+
+**Options:**
+- `-c, --clear` - Clear the active session
+
+**Examples:**
+```bash
+# View current session
+openclaw-opencode session
+
+# Clear session (next task will create new session)
+openclaw-opencode session --clear
 ```
 
 ### `status` - Check Task Status
@@ -204,6 +261,21 @@ In non-blocking mode, the CLI registers a callback with the plugin. When the Ope
                     │  to OpenClaw │
                     └──────────────┘
 ```
+
+## Session Persistence
+
+Sessions are persisted locally to maintain context across multiple `task` commands:
+
+**Storage Location:**
+- macOS/Linux: `~/.@laceletho-openclaw-opencode-cli/session.json`
+- Windows: `%USERPROFILE%\.@laceletho-openclaw-opencode-cli\session.json`
+
+**Behavior:**
+- First `task` command creates a new session and saves it
+- Subsequent `task` commands reuse the saved session
+- Use `--new-session` to create a new session (and replace the saved one)
+- Use `session --clear` to clear the saved session
+- Directory changes trigger a new session (to avoid context confusion)
 
 ## Development
 
