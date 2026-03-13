@@ -86,8 +86,9 @@ export async function dispatchTask(
   logger.info("Sending prompt to session", { sessionId, promptLength: prompt.length });
   const promptStart = Date.now();
 
+  // SDK runtime expects 'id' not 'sessionID' for path parameter
   const promptResult = await client.session.prompt({
-    sessionID: sessionId,
+    id: sessionId,
     parts: [{ type: "text", text: prompt }],
   } as any);
 
@@ -116,8 +117,8 @@ export async function getSessionStatus(client: OpencodeClient, sessionId: string
 
   // Get session info
   const sessionStart = Date.now();
-  // @ts-ignore - SDK types mismatch: Session2 uses sessionID but TypeScript resolves to old Session type with id
-  const sessionResult = await client.session.get({ sessionID: sessionId });
+  // SDK runtime expects 'id' not 'sessionID' for path parameter
+  const sessionResult = await client.session.get({ id: sessionId } as any);
   logger.http("GET", `/session/${sessionId}`, sessionResult.error ? 500 : 200, Date.now() - sessionStart);
 
   if (sessionResult.error) {

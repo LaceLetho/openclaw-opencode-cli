@@ -98,8 +98,8 @@ export const taskCommand = new Command("task")
           pollCount++;
 
           // Get session info
-          // @ts-ignore - SDK types mismatch: Session2 uses sessionID but TypeScript resolves to old Session type with id
-          const sessionResult = await client.session.get({ sessionID: sessionId });
+          // SDK runtime expects 'id' not 'sessionID' for path parameter
+          const sessionResult = await client.session.get({ id: sessionId } as any);
 
           if (sessionResult.error) {
             logger.error("Failed to get session status", { taskId, sessionId, error: sessionResult.error });
@@ -131,8 +131,9 @@ export const taskCommand = new Command("task")
 
             // Fetch and display the last assistant message
             try {
+              // SDK runtime expects 'id' not 'sessionID' for path parameter
               const messagesResult = await client.session.messages({
-                sessionID: sessionId,
+                id: sessionId,
                 limit: 5,
               } as any);
 
