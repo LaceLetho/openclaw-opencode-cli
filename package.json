@@ -19,10 +19,10 @@
     "ai",
     "agent"
   ],
-  "author": "",
+  "author": "laceletho",
   "license": "MIT",
   "dependencies": {
-    "@opencode-ai/sdk": "file:../opencode-railway-monorepo/opencode/packages/sdk/js",
+    "@opencode-ai/sdk": "^1.2.25",
     "commander": "^12.0.0"
   },
   "devDependencies": {
