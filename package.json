@@ -1,0 +1,35 @@
+{
+  "name": "@laceletho/openclaw-opencode-cli",
+  "version": "1.0.0",
+  "description": "Command line tool for OpenClaw to dispatch tasks to OpenCode with async callback support",
+  "type": "module",
+  "bin": {
+    "openclaw-opencode": "./bin/openclaw-opencode"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "start": "node ./dist/index.js"
+  },
+  "keywords": [
+    "openclaw",
+    "opencode",
+    "cli",
+    "ai",
+    "agent"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@opencode-ai/sdk": "file:../opencode-railway-monorepo/opencode/packages/sdk/js",
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
