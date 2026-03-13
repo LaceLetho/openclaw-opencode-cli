@@ -41,15 +41,13 @@ npm install @laceletho/plugin-openclaw
 {
   "plugins": ["@laceletho/plugin-openclaw"],
   "openclaw": {
-    "openclawWebhookUrl": "http://localhost:18789/hooks/agent",
+    "port": 9090,
     "openclawApiKey": "your-openclaw-token"
   }
 }
-
-# 或使用环境变量配置
-export OPENCLAW_CALLBACK_URL=http://localhost:18789/hooks/agent
-export OPENCLAW_API_KEY=your-openclaw-token
 ```
+
+插件默认监听 9090 端口接收回调注册请求。
 
 **本地模式** :
 ```bash
@@ -131,6 +129,11 @@ openclaw-opencode list --clear  # 清除已完成任务
 
 **注意**：`OPENCLAW_*` 回调相关变量仅在**非阻塞模式**（默认）下生效。阻塞模式（`--wait`）下任务结果直接输出到终端，不发送回调。
 
+**工作原理**：
+1. CLI 创建 session 后，非阻塞模式下会向插件的 `/register` 端点注册回调信息
+2. 插件订阅 OpenCode 的 `session.updated` 事件
+3. 当 session 完成（`completed` 或 `failed`）时，插件自动发送回调到 OpenClaw
+
 ## OpenClaw 集成
 
 ### 1. 配置 OpenClaw Hooks
@@ -148,27 +151,31 @@ openclaw-opencode list --clear  # 清除已完成任务
 }
 ```
 
-### 2. 在 OpenCode 环境配置插件和回调
+### 2. 在 OpenCode 环境配置插件
 
 确保已在 OpenCode 服务器上安装并启用 `@laceletho/plugin-openclaw` 插件：
 
 ```bash
 # 安装插件
 npm install @laceletho/plugin-openclaw
+
+# 在 opencode.json 中启用
+{
+  "plugins": ["@laceletho/plugin-openclaw"],
+  "openclaw": {
+    "port": 9090
+  }
+}
 ```
 
-配置环境变量：
-```bash
-# 这些变量在 OpenCode 服务器运行的环境中设置
-export OPENCLAW_API_KEY=your-secure-token
-export OPENCLAW_CALLBACK_URL=http://localhost:18789/hooks/agent
-```
-
-或直接在 `opencode.json` 中配置插件。
+插件会自动：
+1. 启动 HTTP 服务器（默认 9090 端口）接收回调注册
+2. 订阅 OpenCode 的 `session.updated` 事件
+3. 在 session 完成时发送回调到 OpenClaw
 
 ### 3. 任务完成回调
 
-非阻塞模式下，任务完成后 CLI 会自动发送回调到 OpenClaw（需要 `opencode-plugin-openclaw` 插件支持）：
+非阻塞模式下，CLI 会向插件注册回调，当 OpenCode session 完成时，插件自动触发回调：
 
 ```json
 {

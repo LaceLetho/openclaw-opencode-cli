@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createClient, dispatchTask } from "../client.js";
+import { createClient, dispatchTask, registerCallback } from "../client.js";
 import { storeTask } from "../utils/store.js";
 
 export const taskCommand = new Command("task")
@@ -61,7 +61,25 @@ export const taskCommand = new Command("task")
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       } else {
-        console.log("Task is running asynchronously. Use 'status' command to check progress.");
+        // 非阻塞模式：向插件注册回调
+        const callbackUrl = options.callbackUrl || process.env.OPENCLAW_CALLBACK_URL;
+        if (callbackUrl) {
+          try {
+            await registerCallback(sessionId, {
+              url: callbackUrl,
+              apiKey: process.env.OPENCLAW_API_KEY,
+              agentId: options.agentId || process.env.OPENCLAW_AGENT_ID,
+              channel: options.channel || process.env.OPENCLAW_CHANNEL,
+              deliver: options.deliver ?? (process.env.OPENCLAW_DELIVER !== "false"),
+            });
+            console.log("Callback registered. You will be notified when the task completes.");
+          } catch (err) {
+            console.warn("Warning: Failed to register callback:", err instanceof Error ? err.message : err);
+            console.log("Task is running but you won't receive automatic notification.");
+          }
+        } else {
+          console.log("Task is running asynchronously. Use 'status' command to check progress.");
+        }
       }
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);
