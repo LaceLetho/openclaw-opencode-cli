@@ -1,4 +1,4 @@
-import { OpenCodeSDK } from "@opencode-ai/sdk";
+import { createOpencodeClient, OpencodeClient } from "@opencode-ai/sdk";
 
 export interface OpenCodeConfig {
   url?: string;
@@ -6,7 +6,7 @@ export interface OpenCodeConfig {
   password?: string;
 }
 
-export function createClient(config: OpenCodeConfig): OpenCodeSDK {
+export function createClient(config: OpenCodeConfig): OpencodeClient {
   const url = config.url || process.env.OPENCODE_URL;
   const username = config.username || process.env.OPENCODE_USERNAME || "opencode";
   const password = config.password || process.env.OPENCODE_PASSWORD;
@@ -19,25 +19,48 @@ export function createClient(config: OpenCodeConfig): OpenCodeSDK {
     throw new Error("OPENCODE_PASSWORD is required. Set it as environment variable or pass --password");
   }
 
-  return new OpenCodeSDK({
+  // Encode auth for Basic auth header
+  const authString = `${username}:${password}`;
+  const authHeader = `Basic ${Buffer.from(authString).toString("base64")}`;
+
+  return createOpencodeClient({
     baseUrl: url,
-    auth: {
-      type: "basic",
-      username,
-      password,
+    headers: {
+      Authorization: authHeader,
     },
   });
 }
 
 export async function dispatchTask(
-  client: OpenCodeSDK,
+  client: OpencodeClient,
   prompt: string,
   options?: { directory?: string }
 ): Promise<{ sessionId: string; taskId: string }> {
-  const session = await client.sessions.create({
-    prompt,
-    ...(options?.directory && { cwd: options.directory }),
+  // Create session first
+  const createResult = await client.session.create({
+    query: options?.directory ? { directory: options.directory } : undefined,
   });
+
+  if (createResult.error) {
+    throw new Error(`Failed to create session: ${createResult.error}`);
+  }
+
+  const session = createResult.data;
+  if (!session) {
+    throw new Error("Failed to create session: no data returned");
+  }
+
+  // Send prompt to the session
+  const promptResult = await client.session.prompt({
+    path: { id: session.id },
+    body: {
+      parts: [{ type: "text", text: prompt }],
+    },
+  });
+
+  if (promptResult.error) {
+    throw new Error(`Failed to send prompt: ${promptResult.error}`);
+  }
 
   return {
     sessionId: session.id,
@@ -45,13 +68,35 @@ export async function dispatchTask(
   };
 }
 
-export async function getSessionStatus(client: OpenCodeSDK, sessionId: string) {
-  const session = await client.sessions.get(sessionId);
+export async function getSessionStatus(client: OpencodeClient, sessionId: string) {
+  // Get session info
+  const sessionResult = await client.session.get({ path: { id: sessionId } });
+
+  if (sessionResult.error) {
+    throw new Error(`Failed to get session: ${sessionResult.error}`);
+  }
+
+  const session = sessionResult.data;
+  if (!session) {
+    throw new Error("Failed to get session: no data returned");
+  }
+
+  // Get session status
+  const statusResult = await client.session.status({ query: { directory: session.directory } });
+
+  if (statusResult.error) {
+    throw new Error(`Failed to get session status: ${statusResult.error}`);
+  }
+
+  const sessionStatus = statusResult.data?.[sessionId];
+
   return {
     id: session.id,
-    status: session.status,
-    result: session.result,
-    error: session.error,
+    title: session.title,
+    directory: session.directory,
+    status: sessionStatus || { type: "unknown" },
+    created: session.time.created,
+    updated: session.time.updated,
   };
 }
 

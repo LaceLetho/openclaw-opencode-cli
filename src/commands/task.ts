@@ -42,19 +42,27 @@ export const taskCommand = new Command("task")
         const startTime = Date.now();
 
         while (Date.now() - startTime < timeoutMs) {
-          const session = await client.sessions.get(sessionId);
+          // Get session info
+          const sessionResult = await client.session.get({ path: { id: sessionId } });
 
-          if (session.status === "completed" || session.status === "failed") {
-            console.log(`\nTask ${session.status}: ${taskId}`);
+          if (sessionResult.error) {
+            console.error("\nError checking session status:", sessionResult.error);
+            break;
+          }
 
-            if (session.status === "completed") {
-              console.log("\nResult:");
-              console.log(session.result || "(no output)");
-            } else {
-              console.error("\nError:");
-              console.error(session.error || "(unknown error)");
-            }
+          const session = sessionResult.data;
+          if (!session) {
+            console.error("\nError: Session not found");
+            break;
+          }
 
+          // Get session status
+          const statusResult = await client.session.status({ query: { directory: session.directory } });
+          const sessionStatus = statusResult.data?.[sessionId];
+
+          if (sessionStatus?.type === "idle") {
+            console.log(`\nTask completed: ${taskId}`);
+            console.log("Session is idle. Check the session for results.");
             break;
           }
 

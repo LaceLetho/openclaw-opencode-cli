@@ -20,24 +20,33 @@ export const statusCommand = new Command("status")
         password: process.env.OPENCODE_PASSWORD,
       });
 
-      const session = await client.sessions.get(task.sessionId);
+      // Get session info
+      const sessionResult = await client.session.get({ path: { id: task.sessionId } });
+
+      if (sessionResult.error) {
+        console.error("Error getting session:", sessionResult.error);
+        process.exit(1);
+      }
+
+      const session = sessionResult.data;
+      if (!session) {
+        console.error("Session not found");
+        process.exit(1);
+      }
+
+      // Get session status
+      const statusResult = await client.session.status({ query: { directory: session.directory } });
+      const sessionStatus = statusResult.data?.[task.sessionId];
 
       console.log(`Task: ${taskId}`);
-      console.log(`Status: ${session.status}`);
+      console.log(`Session ID: ${session.id}`);
+      console.log(`Title: ${session.title}`);
+      console.log(`Directory: ${session.directory}`);
+      console.log(`Status: ${sessionStatus?.type || "unknown"}`);
       console.log(`Created: ${task.createdAt.toISOString()}`);
 
       if (task.completedAt) {
         console.log(`Completed: ${task.completedAt.toISOString()}`);
-      }
-
-      if (session.result) {
-        console.log("\nResult:");
-        console.log(session.result);
-      }
-
-      if (session.error) {
-        console.error("\nError:");
-        console.error(session.error);
       }
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);
