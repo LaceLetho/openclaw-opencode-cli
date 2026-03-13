@@ -1,4 +1,4 @@
-import { createOpencodeClient, OpencodeClient } from "@opencode-ai/sdk";
+import { createOpencodeClient, OpencodeClient } from "@opencode-ai/sdk/v2";
 import { logger } from "./utils/logger.js";
 
 export interface OpenCodeConfig {
@@ -60,9 +60,9 @@ export async function dispatchTask(
     logger.info("Creating new session", { directory: options?.directory });
 
     const createStart = Date.now();
-    const createResult = await client.session.create({
-      query: options?.directory ? { directory: options.directory } : undefined,
-    });
+    const createResult = await client.session.create(
+      options?.directory ? { directory: options.directory } : undefined
+    );
 
     logger.http("POST", "/session", createResult.error ? 500 : 200, Date.now() - createStart);
 
@@ -86,11 +86,10 @@ export async function dispatchTask(
   logger.info("Sending prompt to session", { sessionId, promptLength: prompt.length });
   const promptStart = Date.now();
 
-  // SDK runtime expects 'id' not 'sessionID' for path parameter
   const promptResult = await client.session.prompt({
-    id: sessionId,
+    sessionID: sessionId,
     parts: [{ type: "text", text: prompt }],
-  } as any);
+  });
 
   logger.http("POST", `/session/${sessionId}/prompt`, promptResult.error ? 500 : 200, Date.now() - promptStart);
 
@@ -117,8 +116,7 @@ export async function getSessionStatus(client: OpencodeClient, sessionId: string
 
   // Get session info
   const sessionStart = Date.now();
-  // SDK runtime expects 'id' not 'sessionID' for path parameter
-  const sessionResult = await client.session.get({ id: sessionId } as any);
+  const sessionResult = await client.session.get({ sessionID: sessionId });
   logger.http("GET", `/session/${sessionId}`, sessionResult.error ? 500 : 200, Date.now() - sessionStart);
 
   if (sessionResult.error) {
@@ -134,7 +132,7 @@ export async function getSessionStatus(client: OpencodeClient, sessionId: string
 
   // Get session status
   const statusStart = Date.now();
-  const statusResult = await client.session.status({ query: { directory: session.directory } });
+  const statusResult = await client.session.status({ directory: session.directory });
   logger.http("GET", `/session/status`, statusResult.error ? 500 : 200, Date.now() - statusStart);
 
   if (statusResult.error) {

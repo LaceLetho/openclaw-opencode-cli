@@ -98,8 +98,7 @@ export const taskCommand = new Command("task")
           pollCount++;
 
           // Get session info
-          // SDK runtime expects 'id' not 'sessionID' for path parameter
-          const sessionResult = await client.session.get({ id: sessionId } as any);
+          const sessionResult = await client.session.get({ sessionID: sessionId });
 
           if (sessionResult.error) {
             logger.error("Failed to get session status", { taskId, sessionId, error: sessionResult.error });
@@ -115,7 +114,7 @@ export const taskCommand = new Command("task")
           }
 
           // Get session status
-          const statusResult = await client.session.status({ query: { directory: session.directory } });
+          const statusResult = await client.session.status({ directory: session.directory });
           const sessionStatus = statusResult.data?.[sessionId];
 
           // Session is idle if: 1) status type is "idle", or 2) session not in status list (OpenCode removes completed sessions)
@@ -131,11 +130,10 @@ export const taskCommand = new Command("task")
 
             // Fetch and display the last assistant message
             try {
-              // SDK runtime expects 'id' not 'sessionID' for path parameter
-              const messagesResult = await client.session.messages({
-                id: sessionId,
+                const messagesResult = await client.session.messages({
+                sessionID: sessionId,
                 limit: 5,
-              } as any);
+              });
 
               if (messagesResult.data && messagesResult.data.length > 0) {
                 // Find the last assistant message

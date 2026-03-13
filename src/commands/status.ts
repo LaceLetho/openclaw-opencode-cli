@@ -28,8 +28,7 @@ export const statusCommand = new Command("status")
 
       // Get session info
       logger.debug("Fetching session info", { sessionId: task.sessionId });
-      // SDK runtime expects 'id' not 'sessionID' for path parameter
-      const sessionResult = await client.session.get({ id: task.sessionId } as any);
+      const sessionResult = await client.session.get({ sessionID: task.sessionId });
 
       if (sessionResult.error) {
         logger.error("Failed to get session", { taskId, sessionId: task.sessionId, error: sessionResult.error });
@@ -45,7 +44,7 @@ export const statusCommand = new Command("status")
       }
 
       // Get session status
-      const statusResult = await client.session.status({ query: { directory: session.directory } });
+      const statusResult = await client.session.status({ directory: session.directory });
       const sessionStatus = statusResult.data?.[task.sessionId];
 
       logger.info("Task status retrieved", {
