@@ -117,7 +117,8 @@ export const taskCommand = new Command("task")
           const statusResult = await client.session.status({ query: { directory: session.directory } });
           const sessionStatus = statusResult.data?.[sessionId];
 
-          if (sessionStatus?.type === "idle") {
+          // Session is idle if: 1) status type is "idle", or 2) session not in status list (OpenCode removes completed sessions)
+          if (!sessionStatus || sessionStatus.type === "idle") {
             const duration = Date.now() - startTime;
             logger.task("completed", taskId, {
               sessionId,
@@ -130,7 +131,7 @@ export const taskCommand = new Command("task")
             break;
           }
 
-          logger.debug("Polling session status", { taskId, pollCount, status: sessionStatus?.type });
+          logger.debug("Polling session status", { taskId, pollCount, status: sessionStatus?.type || "idle (not in list)" });
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
