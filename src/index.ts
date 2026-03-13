@@ -4,13 +4,17 @@ import { statusCommand } from "./commands/status.js";
 import { listCommand } from "./commands/list.js";
 import { sessionCommand } from "./commands/session.js";
 import { getHelpText, getExamplesText } from "./utils/help.js";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json");
 
 const program = new Command();
 
 program
   .name("openclaw-opencode")
   .description("CLI for dispatching OpenClaw tasks to OpenCode")
-  .version("1.0.0")
+  .version(pkg.version)
   .addHelpText("before", getHelpText())
   .addHelpText("after", getExamplesText())
   .configureHelp({
