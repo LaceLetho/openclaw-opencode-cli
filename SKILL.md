@@ -71,6 +71,7 @@ export OPENCODE_PASSWORD=your-opencode-password
 
 # Optional
 export OPENCODE_USERNAME=opencode
+export OPENCODE_WORKSPACE=/path/to/default/workspace  # Default working directory for tasks
 export OPENCLAW_CALLBACK_URL=http://localhost:18789/hooks/agent
 export OPENCLAW_API_KEY=shared-secret-token
 export OPENCLAW_AGENT_ID=main
@@ -115,7 +116,7 @@ openclaw-opencode task <prompt> [options]
 |--------|-------------|---------|
 | `-w, --wait` | Block until completion | false |
 | `-t, --timeout <min>` | Timeout for blocking mode | 30 min |
-| `-d, --directory <dir>` | Working directory | current dir |
+| `-d, --directory <dir>` | Working directory (or `OPENCODE_WORKSPACE` env var) | current dir |
 | `-n, --new-session` | Create new session | reuse existing |
 | `-c, --callback-url <url>` | Override callback URL | env.OPENCLAW_CALLBACK_URL |
 | `-a, --agent-id <id>` | Target agent | env.OPENCLAW_AGENT_ID or "main" |

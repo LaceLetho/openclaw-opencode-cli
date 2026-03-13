@@ -21,14 +21,17 @@ export const taskCommand = new Command("task")
         password: process.env.OPENCODE_PASSWORD,
       });
 
+      // Determine working directory: CLI option > environment variable > undefined
+      const workingDirectory = options.directory || process.env.OPENCODE_WORKSPACE;
+
       // Check for active session
       const activeSession = getActiveSession();
       let existingSessionId: string | undefined;
 
       if (!options.newSession && activeSession) {
         // Check if directory matches
-        if (options.directory && activeSession.directory !== options.directory) {
-          console.log(`Directory mismatch. Current session uses "${activeSession.directory}", but you specified "${options.directory}".`);
+        if (workingDirectory && activeSession.directory !== workingDirectory) {
+          console.log(`Directory mismatch. Current session uses "${activeSession.directory}", but you specified "${workingDirectory}".`);
           console.log("Creating new session for this directory...");
         } else {
           existingSessionId = activeSession.sessionId;
@@ -39,13 +42,13 @@ export const taskCommand = new Command("task")
       console.log("Dispatching task to OpenCode...");
 
       const { sessionId, taskId, isNewSession } = await dispatchTask(client, prompt, {
-        directory: options.directory,
+        directory: workingDirectory,
         existingSessionId,
       });
 
       // Save session if it's new or we're explicitly creating a new one
       if (isNewSession || options.newSession) {
-        setActiveSession(sessionId, options.directory);
+        setActiveSession(sessionId, workingDirectory);
         if (options.newSession) {
           console.log(`Created new session: ${sessionId}`);
         }
