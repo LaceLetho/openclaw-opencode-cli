@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import { createClient, dispatchTask } from "../client.js";
-import { getOpenClawConfig, sendCallback, formatCallbackMessage } from "../openclaw.js";
 import { storeTask } from "../utils/store.js";
 
 export const taskCommand = new Command("task")
@@ -54,22 +53,6 @@ export const taskCommand = new Command("task")
             } else {
               console.error("\nError:");
               console.error(session.error || "(unknown error)");
-            }
-
-            const openclawConfig = getOpenClawConfig();
-            if (openclawConfig.callbackUrl || options.callbackUrl) {
-              await sendCallback({
-                message: formatCallbackMessage(
-                  taskId,
-                  session.result || "",
-                  session.error
-                ),
-                name: "OpenCode Task",
-                agentId: options.agentId,
-                channel: options.channel,
-                deliver: options.deliver,
-              });
-              console.log("Callback sent to OpenClaw");
             }
 
             break;

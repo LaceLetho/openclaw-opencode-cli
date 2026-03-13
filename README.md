@@ -10,7 +10,7 @@
 - 🔒 **安全认证**: 支持 HTTP Basic Auth 和 Bearer Token
 - 📝 **丰富帮助**: 详细的帮助信息和示例
 
-## 安装
+## 为OpenClaw安装
 
 ```bash
 npm install -g @laceletho/openclaw-opencode-cli
@@ -20,15 +20,38 @@ npm install -g @laceletho/openclaw-opencode-cli
 
 ### 1. 配置环境变量
 
-**远程模式** (推荐用于生产):
+**远程模式** :
+
+#### 在 OpenClaw 环境设置（运行 CLI 的地方）
 ```bash
+# 连接 OpenCode 服务器（远程模式）
 export OPENCODE_URL=https://your-opencode-server.com
 export OPENCODE_PASSWORD=your-password
+```
+
+#### 在 OpenCode 环境设置（OpenCode 服务器运行的环境）
+
+**前提**：需要在 OpenCode 服务器上安装并启用 [`@laceletho/plugin-openclaw`](https://www.npmjs.com/package/@laceletho/plugin-openclaw) 插件，回调功能才能正常工作。
+
+```bash
+# 安装插件
+npm install @laceletho/plugin-openclaw
+
+# 在 opencode.json 中启用插件
+{
+  "plugins": ["@laceletho/plugin-openclaw"],
+  "openclaw": {
+    "openclawWebhookUrl": "http://localhost:18789/hooks/agent",
+    "openclawApiKey": "your-openclaw-token"
+  }
+}
+
+# 或使用环境变量配置
 export OPENCLAW_CALLBACK_URL=http://localhost:18789/hooks/agent
 export OPENCLAW_API_KEY=your-openclaw-token
 ```
 
-**本地模式** (开发):
+**本地模式** :
 ```bash
 # 只需安装 OpenCode
 curl -fsSL https://opencode.ai/install | bash
@@ -37,10 +60,10 @@ curl -fsSL https://opencode.ai/install | bash
 ### 2. 发送任务
 
 ```bash
-# 非阻塞模式 (默认)
+# 非阻塞模式 (默认) - 返回 taskId，后台执行，完成后回调 OpenClaw
 openclaw-opencode task "Write a Python function to calculate fibonacci"
 
-# 阻塞模式 (等待完成)
+# 阻塞模式 (等待完成) - 实时等待，结果输出到终端，不发送回调
 openclaw-opencode task "Create a React component" --wait
 ```
 
@@ -95,16 +118,18 @@ openclaw-opencode list --clear  # 清除已完成任务
 
 ## 环境变量
 
-| 变量 | 必需 | 默认值 | 说明 |
-|------|------|--------|------|
-| `OPENCODE_URL` | 远程模式 | - | OpenCode 服务器 URL |
-| `OPENCODE_PASSWORD` | 远程模式 | - | HTTP Basic Auth 密码 |
-| `OPENCODE_USERNAME` | 否 | opencode | HTTP Basic Auth 用户名 |
-| `OPENCLAW_CALLBACK_URL` | 否 | http://localhost:18789/hooks/agent | OpenClaw 回调地址 |
-| `OPENCLAW_API_KEY` | 否 | - | OpenClaw 认证 Token |
-| `OPENCLAW_AGENT_ID` | 否 | main | 目标 Agent ID |
-| `OPENCLAW_CHANNEL` | 否 | last | 投递频道 |
-| `OPENCLAW_DELIVER` | 否 | true | 是否投递到消息频道 |
+| 变量 | 设置位置 | 必需 | 默认值 | 说明 |
+|------|----------|------|--------|------|
+| `OPENCODE_URL` | **OpenClaw 环境** | 远程模式 | - | OpenCode 服务器 URL |
+| `OPENCODE_PASSWORD` | **OpenClaw 环境** | 远程模式 | - | HTTP Basic Auth 密码 |
+| `OPENCODE_USERNAME` | **OpenClaw 环境** | 否 | opencode | HTTP Basic Auth 用户名 |
+| `OPENCLAW_CALLBACK_URL` | **OpenCode 环境** | 否 | http://localhost:18789/hooks/agent | OpenClaw 回调地址 |
+| `OPENCLAW_API_KEY` | **OpenCode 环境** | 否 | - | OpenClaw 认证 Token |
+| `OPENCLAW_AGENT_ID` | **OpenClaw 环境** | 否 | main | 目标 Agent ID |
+| `OPENCLAW_CHANNEL` | **OpenClaw 环境** | 否 | last | 投递频道 |
+| `OPENCLAW_DELIVER` | **OpenClaw 环境** | 否 | true | 是否投递到消息频道 |
+
+**注意**：`OPENCLAW_*` 回调相关变量仅在**非阻塞模式**（默认）下生效。阻塞模式（`--wait`）下任务结果直接输出到终端，不发送回调。
 
 ## OpenClaw 集成
 
@@ -123,16 +148,27 @@ openclaw-opencode list --clear  # 清除已完成任务
 }
 ```
 
-### 2. 配置 CLI 环境变量
+### 2. 在 OpenCode 环境配置插件和回调
+
+确保已在 OpenCode 服务器上安装并启用 `@laceletho/plugin-openclaw` 插件：
 
 ```bash
+# 安装插件
+npm install @laceletho/plugin-openclaw
+```
+
+配置环境变量：
+```bash
+# 这些变量在 OpenCode 服务器运行的环境中设置
 export OPENCLAW_API_KEY=your-secure-token
 export OPENCLAW_CALLBACK_URL=http://localhost:18789/hooks/agent
 ```
 
+或直接在 `opencode.json` 中配置插件。
+
 ### 3. 任务完成回调
 
-任务完成后，CLI 会自动发送回调到 OpenClaw:
+非阻塞模式下，任务完成后 CLI 会自动发送回调到 OpenClaw（需要 `opencode-plugin-openclaw` 插件支持）：
 
 ```json
 {
