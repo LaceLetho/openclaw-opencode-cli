@@ -28,7 +28,8 @@ export const statusCommand = new Command("status")
 
       // Get session info
       logger.debug("Fetching session info", { sessionId: task.sessionId });
-      const sessionResult = await client.session.get({ path: { id: task.sessionId } });
+      // @ts-ignore - SDK types mismatch: Session2 uses sessionID but TypeScript resolves to old Session type with id
+      const sessionResult = await client.session.get({ sessionID: task.sessionId });
 
       if (sessionResult.error) {
         logger.error("Failed to get session", { taskId, sessionId: task.sessionId, error: sessionResult.error });

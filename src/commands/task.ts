@@ -98,7 +98,8 @@ export const taskCommand = new Command("task")
           pollCount++;
 
           // Get session info
-          const sessionResult = await client.session.get({ path: { id: sessionId } });
+          // @ts-ignore - SDK types mismatch: Session2 uses sessionID but TypeScript resolves to old Session type with id
+          const sessionResult = await client.session.get({ sessionID: sessionId });
 
           if (sessionResult.error) {
             logger.error("Failed to get session status", { taskId, sessionId, error: sessionResult.error });
@@ -127,7 +128,35 @@ export const taskCommand = new Command("task")
               mode: "blocking"
             });
             console.log(`\nTask completed: ${taskId}`);
-            console.log("Session is idle. Check the session for results.");
+
+            // Fetch and display the last assistant message
+            try {
+              const messagesResult = await client.session.messages({
+                sessionID: sessionId,
+                limit: 5,
+              } as any);
+
+              if (messagesResult.data && messagesResult.data.length > 0) {
+                // Find the last assistant message
+                const messages = messagesResult.data;
+                for (let i = messages.length - 1; i >= 0; i--) {
+                  const msg = messages[i];
+                  if (msg.info.role === "assistant" && msg.parts && msg.parts.length > 0) {
+                    const textParts = msg.parts.filter((p: any) => p.type === "text");
+                    if (textParts.length > 0) {
+                      const reply = textParts.map((p: any) => p.text).join("\n");
+                      console.log("\n--- AI Response ---");
+                      console.log(reply);
+                      console.log("-------------------\n");
+                      break;
+                    }
+                  }
+                }
+              }
+            } catch (err) {
+              logger.debug("Failed to fetch messages", { sessionId, error: err });
+            }
+
             break;
           }
 

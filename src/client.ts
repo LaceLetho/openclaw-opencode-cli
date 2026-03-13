@@ -87,11 +87,11 @@ export async function dispatchTask(
   const promptStart = Date.now();
 
   const promptResult = await client.session.prompt({
-    path: { id: sessionId },
+    path: { sessionID: sessionId } as any,
     body: {
       parts: [{ type: "text", text: prompt }],
     },
-  });
+  } as any);
 
   logger.http("POST", `/session/${sessionId}/prompt`, promptResult.error ? 500 : 200, Date.now() - promptStart);
 
@@ -118,7 +118,8 @@ export async function getSessionStatus(client: OpencodeClient, sessionId: string
 
   // Get session info
   const sessionStart = Date.now();
-  const sessionResult = await client.session.get({ path: { id: sessionId } });
+  // @ts-ignore - SDK types mismatch: Session2 uses sessionID but TypeScript resolves to old Session type with id
+  const sessionResult = await client.session.get({ sessionID: sessionId });
   logger.http("GET", `/session/${sessionId}`, sessionResult.error ? 500 : 200, Date.now() - sessionStart);
 
   if (sessionResult.error) {
