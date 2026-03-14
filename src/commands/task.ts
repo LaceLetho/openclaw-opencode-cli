@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createClient, dispatchTask, registerCallback } from "../client.js";
+import { createClient, registerCallback } from "../client.js";
 import { storeTask, getActiveSession, setActiveSession, clearActiveSession } from "../utils/store.js";
 import { logger } from "../utils/logger.js";
 
@@ -61,12 +61,35 @@ export const taskCommand = new Command("task")
       });
       console.log("Dispatching task to OpenCode...");
 
-      const { sessionId, taskId, isNewSession } = await dispatchTask(client, prompt, {
-        directory: workingDirectory,
-        existingSessionId,
-      });
+      // First, create or get the session
+      let sessionId: string;
+      let isNewSession = false;
 
-      logger.session("created", sessionId, { isNewSession, taskId, workingDirectory });
+      if (existingSessionId) {
+        sessionId = existingSessionId;
+        logger.session("reusing", sessionId, { directory: workingDirectory });
+      } else {
+        logger.info("Creating new session", { directory: workingDirectory });
+        const createResult = await client.session.create(
+          workingDirectory ? { directory: workingDirectory } : undefined
+        );
+
+        if (createResult.error) {
+          logger.error("Failed to create session", { error: createResult.error });
+          throw new Error(`Failed to create session: ${createResult.error}`);
+        }
+
+        const session = createResult.data;
+        if (!session) {
+          throw new Error("Failed to create session: no data returned");
+        }
+
+        sessionId = session.id;
+        isNewSession = true;
+        logger.session("created", sessionId, { directory: session.directory });
+      }
+
+      const taskId = sessionId;
 
       // Save session if it's new or we're explicitly creating a new one
       if (isNewSession || options.newSession) {
@@ -84,6 +107,53 @@ export const taskCommand = new Command("task")
         createdAt: new Date(),
       });
 
+      // Register callback BEFORE sending prompt to avoid race condition
+      const callbackUrl = options.callbackUrl || process.env.OPENCLAW_CALLBACK_URL;
+      let callbackRegistered = false;
+      if (!options.wait && callbackUrl) {
+        try {
+          logger.callback("registering", sessionId, {
+            callbackUrl,
+            agentId: options.agentId || process.env.OPENCLAW_AGENT_ID || "main"
+          });
+
+          await registerCallback(sessionId, {
+            url: callbackUrl,
+            apiKey: process.env.OPENCLAW_API_KEY,
+            agentId: options.agentId || process.env.OPENCLAW_AGENT_ID,
+            channel: options.channel || process.env.OPENCLAW_CHANNEL,
+            deliver: options.deliver ?? (process.env.OPENCLAW_DELIVER !== "false"),
+          });
+
+          logger.callback("registered", sessionId, { taskId, callbackUrl });
+          console.log("Callback registered. You will be notified when the task completes.");
+          callbackRegistered = true;
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          logger.error("Failed to register callback", {
+            taskId,
+            sessionId,
+            error: errorMessage,
+            callbackUrl
+          });
+          console.warn("Warning: Failed to register callback:", errorMessage);
+          console.log("Task is running but you won't receive automatic notification.");
+        }
+      }
+
+      // Now send the prompt
+      logger.info("Sending prompt to session", { sessionId, promptLength: prompt.length });
+      const promptResult = await client.session.prompt({
+        sessionID: sessionId,
+        parts: [{ type: "text", text: prompt }],
+      });
+
+      if (promptResult.error) {
+        logger.error("Failed to send prompt", { sessionId, error: promptResult.error });
+        throw new Error(`Failed to send prompt: ${promptResult.error}`);
+      }
+
+      logger.info("Task dispatched successfully", { sessionId, isNewSession });
       logger.task("dispatched", taskId, { sessionId, isNewSession });
       console.log(`Task dispatched: ${taskId}`);
 
@@ -167,38 +237,12 @@ export const taskCommand = new Command("task")
           logger.warn("Task wait timed out", { taskId, timeout: options.timeout });
         }
       } else {
-        // Non-blocking mode: register callback with plugin
-        const callbackUrl = options.callbackUrl || process.env.OPENCLAW_CALLBACK_URL;
-        if (callbackUrl) {
-          try {
-            logger.callback("registering", sessionId, {
-              callbackUrl,
-              agentId: options.agentId || process.env.OPENCLAW_AGENT_ID || "main"
-            });
-
-            await registerCallback(sessionId, {
-              url: callbackUrl,
-              apiKey: process.env.OPENCLAW_API_KEY,
-              agentId: options.agentId || process.env.OPENCLAW_AGENT_ID,
-              channel: options.channel || process.env.OPENCLAW_CHANNEL,
-              deliver: options.deliver ?? (process.env.OPENCLAW_DELIVER !== "false"),
-            });
-
-            logger.callback("registered", sessionId, { taskId, callbackUrl });
-            console.log("Callback registered. You will be notified when the task completes.");
-          } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error("Failed to register callback", {
-              taskId,
-              sessionId,
-              error: errorMessage,
-              callbackUrl
-            });
-            console.warn("Warning: Failed to register callback:", errorMessage);
-            console.log("Task is running but you won't receive automatic notification.");
-          }
+        // Non-blocking mode: callback already registered before sending prompt
+        if (callbackRegistered) {
+          console.log("Task is running asynchronously. You will be notified when it completes.");
+        } else if (callbackUrl) {
+          console.log("Task is running asynchronously. Callback registration failed - use 'status' command to check progress.");
         } else {
-          logger.info("No callback URL configured, running async without notification", { taskId });
           console.log("Task is running asynchronously. Use 'status' command to check progress.");
         }
       }
