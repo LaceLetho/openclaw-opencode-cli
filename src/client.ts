@@ -163,6 +163,7 @@ export interface CallbackConfig {
   agentId?: string;
   channel?: string;
   deliver?: boolean;
+  sessionKey?: string;  // OpenClaw session key for routing replies back to the original channel
 }
 
 /**

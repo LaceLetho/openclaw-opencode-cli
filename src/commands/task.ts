@@ -8,6 +8,7 @@ export const taskCommand = new Command("task")
   .argument("<prompt>", "Task prompt to send to OpenCode")
   .option("-c, --callback-url <url>", "OpenClaw callback URL")
   .option("-a, --agent-id <id>", "OpenClaw Agent ID")
+  .option("--session-key <key>", "OpenClaw session key for routing replies")
   .option("--channel <channel>", "Message delivery channel")
   .option("--no-deliver", "Do not deliver to messaging channel")
   .option("-d, --directory <dir>", "Working directory")
@@ -123,6 +124,7 @@ export const taskCommand = new Command("task")
             agentId: options.agentId || process.env.OPENCLAW_AGENT_ID,
             channel: options.channel || process.env.OPENCLAW_CHANNEL,
             deliver: options.deliver ?? (process.env.OPENCLAW_DELIVER !== "false"),
+            sessionKey: options.sessionKey || process.env.OPENCLAW_SESSION_KEY,
           });
 
           logger.callback("registered", sessionId, { taskId, callbackUrl });
