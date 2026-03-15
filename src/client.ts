@@ -163,7 +163,7 @@ export interface CallbackConfig {
   agentId?: string;
   channel?: string;
   deliver?: boolean;
-  sessionKey?: string;  // OpenClaw session key for routing replies back to the original channel
+  to?: string;  // Target recipient for message forwarding
 }
 
 /**
@@ -212,6 +212,8 @@ export async function registerCallback(
     pluginUrl,
     callbackUrl: config.url,
     agentId: config.agentId || "main",
+    channel: config.channel,
+    to: config.to,
   });
 
   try {

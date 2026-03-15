@@ -6,17 +6,34 @@ import { logger } from "../utils/logger.js";
 export const taskCommand = new Command("task")
   .description("Dispatch a task to OpenCode")
   .argument("<prompt>", "Task prompt to send to OpenCode")
-  .option("-c, --callback-url <url>", "OpenClaw callback URL")
-  .option("-a, --agent-id <id>", "OpenClaw Agent ID")
-  .option("--session-key <key>", "OpenClaw session key for routing replies")
-  .option("--channel <channel>", "Message delivery channel")
-  .option("--no-deliver", "Do not deliver to messaging channel")
+  .option("-c, --callback-url <url>", "OpenClaw callback URL for receiving task completion callbacks")
+  .option("-a, --agent-id <id>", "Target agent ID for callback routing (required for async mode)")
+  .option("--channel <channel>", "Message delivery channel for callback, e.g., telegram, slack (required for async mode)")
+  .option("--to <recipient>", "Target recipient for callback message, e.g., @username, #channel (required for async mode)")
   .option("-d, --directory <dir>", "Working directory")
-  .option("-w, --wait", "Wait for task completion (blocking mode)")
+  .option("-w, --wait", "Wait for task completion (blocking mode). When used, callback options are not required")
   .option("-t, --timeout <minutes>", "Timeout in minutes", "30")
   .option("-n, --new-session", "Create a new session and use it for future tasks")
   .action(async (prompt: string, options) => {
     const startTime = Date.now();
+
+    // Validate callback options for async mode
+    if (!options.wait) {
+      const missingOptions: string[] = [];
+      if (!options.agentId) missingOptions.push("--agent-id");
+      if (!options.channel) missingOptions.push("--channel");
+      if (!options.to) missingOptions.push("--to");
+
+      if (missingOptions.length > 0) {
+        console.error(`Error: Callback options are required for async mode (when not using --wait). Missing: ${missingOptions.join(", ")}`);
+        console.error("These options configure where task completion callbacks are sent:");
+        console.error("  --agent-id: Target agent ID for callback routing");
+        console.error("  --channel:  Message delivery channel (e.g., telegram, slack)");
+        console.error("  --to:       Target recipient (e.g., @username, #channel)");
+        console.error("\nOr use --wait for blocking mode (no callback needed).");
+        process.exit(1);
+      }
+    }
 
     try {
       logger.info("Task command started", {
@@ -108,24 +125,45 @@ export const taskCommand = new Command("task")
         createdAt: new Date(),
       });
 
+      // Debug: Log all environment variables related to openclaw
+      logger.info("Environment check", {
+        OPENCLAW_CALLBACK_URL: process.env.OPENCLAW_CALLBACK_URL,
+        OPENCLAW_API_KEY: process.env.OPENCLAW_API_KEY ? "SET" : "NOT_SET",
+        OPENCLAW_CHANNEL: process.env.OPENCLAW_CHANNEL,
+        OPENCLAW_TO: process.env.OPENCLAW_TO,
+        OPENCODE_URL: process.env.OPENCODE_URL,
+        NODE_ENV: process.env.NODE_ENV,
+      });
+
       // Register callback BEFORE sending prompt to avoid race condition
       const callbackUrl = options.callbackUrl || process.env.OPENCLAW_CALLBACK_URL;
       let callbackRegistered = false;
+      logger.info("Callback URL resolution", { callbackUrl, fromOptions: !!options.callbackUrl, fromEnv: !!process.env.OPENCLAW_CALLBACK_URL });
       if (!options.wait && callbackUrl) {
         try {
           logger.callback("registering", sessionId, {
             callbackUrl,
-            agentId: options.agentId || process.env.OPENCLAW_AGENT_ID || "main"
+            agentId: options.agentId,
+            channel: options.channel,
+            to: options.to,
           });
 
-          await registerCallback(sessionId, {
+          const callbackConfig = {
             url: callbackUrl,
             apiKey: process.env.OPENCLAW_API_KEY,
-            agentId: options.agentId || process.env.OPENCLAW_AGENT_ID,
-            channel: options.channel || process.env.OPENCLAW_CHANNEL,
-            deliver: options.deliver ?? (process.env.OPENCLAW_DELIVER !== "false"),
-            sessionKey: options.sessionKey || process.env.OPENCLAW_SESSION_KEY,
+            agentId: options.agentId,
+            channel: options.channel,
+            deliver: true,
+            to: options.to,
+          };
+          logger.info("Callback config prepared", {
+            url: callbackConfig.url,
+            hasApiKey: !!callbackConfig.apiKey,
+            agentId: callbackConfig.agentId,
+            channel: callbackConfig.channel,
+            to: callbackConfig.to,
           });
+          await registerCallback(sessionId, callbackConfig);
 
           logger.callback("registered", sessionId, { taskId, callbackUrl });
           console.log("Callback registered. You will be notified when the task completes.");

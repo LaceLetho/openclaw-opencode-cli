@@ -59,9 +59,14 @@ openclaw-opencode task "Start a new Python project" --new-session
 
 ```bash
 # Non-blocking mode (default) - Returns taskId, callbacks OpenClaw when done
-openclaw-opencode task "Write a Python function to calculate fibonacci"
+# Requires callback options: --agent-id, --channel, --to
+openclaw-opencode task "Write a Python function to calculate fibonacci" \
+  --agent-id myagent \
+  --channel telegram \
+  --to @username
 
 # Blocking mode - Waits in real-time, outputs result to terminal
+# No callback options needed
 openclaw-opencode task "Create a React component" --wait
 ```
 
@@ -74,14 +79,16 @@ openclaw-opencode task <prompt> [options]
 ```
 
 **Options:**
-- `-c, --callback-url <url>` - OpenClaw callback URL
-- `-a, --agent-id <id>` - OpenClaw Agent ID (default: main)
-- `--channel <channel>` - Message delivery channel (default: last)
-- `--no-deliver` - Do not deliver to messaging channel
+- `-c, --callback-url <url>` - OpenClaw callback URL (optional, uses env.OPENCLAW_CALLBACK_URL if not set)
+- `-a, --agent-id <id>` - Target agent ID for callback routing (required for async mode)
+- `--channel <channel>` - Message delivery channel for callback, e.g., telegram, slack (required for async mode)
+- `--to <recipient>` - Target recipient for callback message, e.g., @username, #channel (required for async mode)
 - `-d, --directory <dir>` - Working directory
-- `-w, --wait` - Wait for task completion in blocking mode
+- `-w, --wait` - Wait for task completion in blocking mode (callback options not required when using this)
 - `-t, --timeout <minutes>` - Timeout in minutes (default: 30)
 - `-n, --new-session` - Create a new session
+
+**Note:** The `--agent-id`, `--channel`, and `--to` options are only required for async mode (default). They configure where task completion callbacks are sent. Use `--wait` for blocking mode where these options are not needed.
 
 ### `session` - Manage Active Session
 

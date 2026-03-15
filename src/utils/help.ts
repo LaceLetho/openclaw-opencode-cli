@@ -23,11 +23,13 @@ Required (for remote OpenCode server):
 
 Optional:
   OPENCODE_USERNAME     HTTP Basic Auth username (default: opencode)
-  OPENCLAW_CALLBACK_URL OpenClaw hooks endpoint (default: http://localhost:18789/hooks/agent)
+  OPENCLAW_CALLBACK_URL OpenClaw hooks endpoint for receiving task callbacks
   OPENCLAW_API_KEY      OpenClaw hooks authentication token
-  OPENCLAW_AGENT_ID     Target agent ID for callbacks (default: main)
-  OPENCLAW_CHANNEL      Delivery channel (default: last)
-  OPENCLAW_DELIVER      Whether to deliver to messaging channel (default: true)
+
+Callback Options (required for async mode, not needed with --wait):
+  --agent-id <id>       Target agent ID for callback routing
+  --channel <channel>   Message delivery channel (e.g., telegram, slack)
+  --to <recipient>      Target recipient (e.g., @username, #channel)
 
 CONNECTION MODES:
 ────────────────
@@ -55,20 +57,27 @@ export function getExamplesText(): string {
 EXAMPLES:
 ────────
 
-1. Dispatch a simple task (non-blocking):
-   $ openclaw-opencode task "Write a Python function to calculate fibonacci"
+1. Dispatch a simple task (async mode - requires callback options):
+   $ openclaw-opencode task "Write a Python function to calculate fibonacci" \\
+     --agent-id myagent \\
+     --channel telegram \\
+     --to @username
 
 2. Dispatch with custom callback URL:
    $ openclaw-opencode task "Review this code" \\
-     --callback-url http://localhost:18789/hooks/agent
+     --callback-url http://localhost:18789/hooks/agent \\
+     --agent-id myagent \\
+     --channel telegram \\
+     --to @username
 
-3. Dispatch and wait for completion (blocking):
+3. Dispatch and wait for completion (blocking - no callback options needed):
    $ openclaw-opencode task "Create a React component" --wait
 
-4. Dispatch with specific agent and channel:
+4. Dispatch with specific callback target (async mode):
    $ openclaw-opencode task "Analyze logs" \\
      --agent-id code-reviewer \\
-     --channel telegram
+     --channel telegram \\
+     --to @admin
 
 5. Check task status:
    $ openclaw-opencode status task-1234567890-abc12

@@ -112,34 +112,51 @@ openclaw-opencode task <prompt> [options]
 - `prompt` - Natural language task description
 
 **Options:**
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-w, --wait` | Block until completion | false |
-| `-t, --timeout <min>` | Timeout for blocking mode | 30 min |
-| `-d, --directory <dir>` | Working directory (or `OPENCODE_WORKSPACE` env var) | current dir |
-| `-n, --new-session` | Create new session | reuse existing |
-| `-c, --callback-url <url>` | Override callback URL | env.OPENCLAW_CALLBACK_URL |
-| `-a, --agent-id <id>` | Target agent | env.OPENCLAW_AGENT_ID or "main" |
-| `--channel <ch>` | Delivery channel | env.OPENCLAW_CHANNEL or "last" |
-| `--no-deliver` | Skip message delivery | false |
+| Option | Description | Default | Required |
+|--------|-------------|---------|----------|
+| `-w, --wait` | Block until completion (no callback needed) | false | No |
+| `-t, --timeout <min>` | Timeout for blocking mode | 30 min | No |
+| `-d, --directory <dir>` | Working directory (or `OPENCODE_WORKSPACE` env var) | current dir | No |
+| `-n, --new-session` | Create new session | reuse existing | No |
+| `-c, --callback-url <url>` | Override callback URL | env.OPENCLAW_CALLBACK_URL | No |
+| `-a, --agent-id <id>` | Target agent ID for callback routing | - | **Async mode only** |
+| `--channel <ch>` | Delivery channel for callback (e.g., telegram, slack) | - | **Async mode only** |
+| `--to <recipient>` | Target recipient for callback (e.g., @username, #channel) | - | **Async mode only** |
+
+**Callback Options (`--agent-id`, `--channel`, `--to`):**
+
+These options configure where task completion callbacks are sent. They are **only required for async mode** (default non-blocking behavior). When using `--wait` (blocking mode), these options are not needed.
+
+- `--agent-id`: The agent ID that will receive the callback
+- `--channel`: The messaging platform/channel type (e.g., telegram, slack, email)
+- `--to`: The specific recipient identifier (e.g., @username, #channel-name, user@example.com)
 
 **Examples:**
 
 ```bash
-# Basic task
-openclaw-opencode task "Fix the login bug in src/auth.ts"
+# Basic task (async mode - requires callback options)
+openclaw-opencode task "Fix the login bug in src/auth.ts" \
+  --agent-id myagent \
+  --channel telegram \
+  --to @username
 
-# Wait for result
+# Wait for result (blocking mode - no callback options needed)
 openclaw-opencode task "Refactor utils to TypeScript" --wait
 
 # Specific directory with timeout
 openclaw-opencode task "Add tests" --directory ./backend --wait --timeout 60
 
-# New session for unrelated work
-openclaw-opencode task "Create new landing page" --new-session
+# New session for unrelated work (async mode)
+openclaw-opencode task "Create new landing page" --new-session \
+  --agent-id myagent \
+  --channel telegram \
+  --to @username
 
-# Custom callback target
-openclaw-opencode task "Deploy staging" --agent-id devops --channel deployments
+# Custom callback target (async mode)
+openclaw-opencode task "Deploy staging" \
+  --agent-id devops \
+  --channel telegram \
+  --to #deployments
 ```
 
 **Session Behavior:**
