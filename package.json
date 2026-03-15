@@ -1,6 +1,6 @@
 {
   "name": "@laceletho/openclaw-opencode-cli",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "Command line tool for OpenClaw to dispatch tasks to OpenCode with async callback support",
   "type": "module",
   "main": "./dist/index.js",
