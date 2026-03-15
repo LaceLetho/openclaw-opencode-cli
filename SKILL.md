@@ -23,28 +23,7 @@ Delegate coding tasks to OpenCode AI agent and receive asynchronous callbacks wh
 
 ## Prerequisites
 
-### 1. OpenCode Server with Plugin
-
-OpenCode must be running with `@laceletho/plugin-openclaw` installed:
-
-```json
-// opencode.json
-{
-  "plugins": ["@laceletho/plugin-openclaw"],
-  "openclaw": {
-    "port": 9090,
-    "openclawApiKey": "shared-secret-token"
-  }
-}
-```
-
-Environment variables for OpenCode:
-```bash
-OPENCLAW_PORT=9090
-OPENCLAW_API_KEY=shared-secret-token
-```
-
-### 2. OpenClaw Webhook Configuration
+### 1. OpenClaw Webhook Configuration
 
 ```json
 // openclaw.json
@@ -60,12 +39,9 @@ OPENCLAW_API_KEY=shared-secret-token
 }
 ```
 
-**Important:** Tokens must match between OpenCode and OpenClaw configs.
-
-### 3. Environment Variables (Where OpenClaw Runs)
+### 2. Environment Variables
 
 ```bash
-# Required for remote OpenCode
 export OPENCODE_URL=https://your-opencode-server.com:4096
 export OPENCODE_PASSWORD=your-opencode-password
 
@@ -78,7 +54,7 @@ export OPENCLAW_AGENT_ID=main
 export OPENCLAW_CHANNEL=last
 ```
 
-### 4. Install CLI
+### 3. Install CLI
 
 ```bash
 npm install -g @laceletho/openclaw-opencode-cli
@@ -310,18 +286,6 @@ Active session:
 
 ## Troubleshooting
 
-### Connection Failed to Plugin
-
-```
-Error: Failed to connect to opencode-plugin-openclaw
-```
-
-**Solutions:**
-1. Verify OpenCode server is running
-2. Check `OPENCODE_URL` points to correct address
-3. Ensure port 9090 is accessible for remote servers
-4. Confirm plugin is loaded in `opencode.json`
-
 ### Authentication Failed
 
 ```
@@ -332,18 +296,6 @@ Error: Callback failed: 401 Unauthorized
 1. Verify `openclaw.openclawApiKey` matches `hooks.token`
 2. Check `OPENCLAW_API_KEY` environment variable
 3. Ensure tokens are identical (case-sensitive)
-
-### Missing Configuration
-
-```
-Error: OPENCODE_URL is required
-```
-
-**Solution:**
-```bash
-export OPENCODE_URL=https://your-server.com
-export OPENCODE_PASSWORD=your-password
-```
 
 ## Architecture
 
@@ -368,18 +320,9 @@ export OPENCODE_PASSWORD=your-password
 └─────────────┘
 ```
 
-### Plugin Event Tracking
-
-The plugin monitors OpenCode events:
-- `message.part.updated` - Accumulates outputs
-- `message.part.delta` - Streaming text
-- `session.updated` - Detects completion (status: `completed`/`failed`)
-- `session.error` - Captures errors
-
 ## Security Notes
 
 - **Bearer Token Auth:** All callbacks use token authentication
-- **HTTP Basic Auth:** OpenCode API requires username/password
 - **Agent Filtering:** OpenClaw restricts callbacks via `allowedAgentIds`
 
 ## Related Resources
