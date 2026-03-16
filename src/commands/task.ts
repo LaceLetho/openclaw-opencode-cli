@@ -50,15 +50,19 @@ export const taskCommand = new Command("task")
       });
 
       // Determine working directory: CLI option > environment variable > undefined
-      const workingDirectory = options.directory || process.env.OPENCODE_WORKSPACE;
+      // Use ?? to allow empty string as a valid directory value
+      const workingDirectory = options.directory ?? process.env.OPENCODE_WORKSPACE;
 
       // Check for active session
       const activeSession = getActiveSession();
       let existingSessionId: string | undefined;
 
       if (!options.newSession && activeSession) {
-        // Check if directory matches
-        if (workingDirectory && activeSession.directory !== workingDirectory) {
+        // Check if directory matches (handle undefined vs empty string correctly)
+        const directoryMismatch = workingDirectory !== undefined
+          ? activeSession.directory !== workingDirectory
+          : activeSession.directory !== undefined;
+        if (directoryMismatch) {
           logger.info("Directory mismatch, creating new session", {
             currentDirectory: activeSession.directory,
             requestedDirectory: workingDirectory,

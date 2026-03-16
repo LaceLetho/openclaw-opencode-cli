@@ -60,7 +60,7 @@ export async function dispatchTask(
     logger.warn("[CLIENT_DEBUG] Creating new session", { directory: options?.directory });
 
     const createStart = Date.now();
-    const createParams = options?.directory ? { directory: options.directory } : undefined;
+    const createParams = options?.directory !== undefined ? { directory: options.directory } : undefined;
     logger.warn("[CLIENT_DEBUG] SDK session.create params", { createParams });
 
     const createResult = await client.session.create(createParams);
