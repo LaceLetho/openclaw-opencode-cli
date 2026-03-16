@@ -28,7 +28,7 @@
   "author": "laceletho",
   "license": "MIT",
   "dependencies": {
-    "@opencode-ai/sdk": "^1.2.25",
+    "@opencode-ai/sdk": "^1.2.27",
     "commander": "^12.0.0"
   },
   "devDependencies": {
