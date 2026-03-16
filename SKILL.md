@@ -23,38 +23,7 @@ Delegate coding tasks to OpenCode AI agent and receive asynchronous callbacks wh
 
 ## Prerequisites
 
-### 1. OpenClaw Webhook Configuration
-
-```json
-// openclaw.json
-{
-  "hooks": {
-    "enabled": true,
-    "token": "shared-secret-token",
-    "path": "/hooks",
-    "allowedAgentIds": ["main", "hooks"],
-    "defaultSessionKey": "hook:opencode",
-    "allowedSessionKeyPrefixes": ["hook:"]
-  }
-}
-```
-
-### 2. Environment Variables
-
-```bash
-export OPENCODE_URL=https://your-opencode-server.com:4096
-export OPENCODE_PASSWORD=your-opencode-password
-
-# Optional
-export OPENCODE_USERNAME=opencode
-export OPENCODE_WORKSPACE=/path/to/default/workspace  # Default working directory for tasks
-export OPENCLAW_CALLBACK_URL=http://localhost:18789/hooks/agent
-export OPENCLAW_API_KEY=shared-secret-token
-export OPENCLAW_AGENT_ID=main
-export OPENCLAW_CHANNEL=last
-```
-
-### 3. Install CLI
+### 1. Install CLI
 
 ```bash
 npm install -g @laceletho/openclaw-opencode-cli
@@ -63,8 +32,11 @@ npm install -g @laceletho/openclaw-opencode-cli
 ## Quick Start
 
 ```bash
-# Dispatch a task (non-blocking)
-openclaw-opencode task "Review authentication code in src/auth/"
+# Dispatch a task (non-blocking) - requires callback options: --agent-id, --channel, --to
+openclaw-opencode task "Review authentication code in src/auth/" \
+  --agent-id agentToHandleCallback \
+  --channel callbackChannel \
+  --to chatIDToForwardResults
 
 # Wait for completion
 openclaw-opencode task "Create React todo component" --wait
@@ -110,14 +82,6 @@ These options configure where task completion callbacks are sent. They are **onl
 **Examples:**
 
 ```bash
-# Basic task (async mode - requires callback options)
-openclaw-opencode task "Fix the login bug in src/auth.ts" \
-  --agent-id myagent \
-  --channel telegram \
-  --to @username
-
-# Wait for result (blocking mode - no callback options needed)
-openclaw-opencode task "Refactor utils to TypeScript" --wait
 
 # Specific directory with timeout
 openclaw-opencode task "Add tests" --directory ./backend --wait --timeout 60
@@ -127,12 +91,7 @@ openclaw-opencode task "Create new landing page" --new-session \
   --agent-id myagent \
   --channel telegram \
   --to @username
-
-# Custom callback target (async mode)
-openclaw-opencode task "Deploy staging" \
-  --agent-id devops \
-  --channel telegram \
-  --to #deployments
+  
 ```
 
 **Session Behavior:**
@@ -174,10 +133,13 @@ openclaw-opencode list --clear
 When building a feature, reuse the session for context:
 
 ```bash
-# All tasks share context
-openclaw-opencode task "Create User model with email/password fields"
-openclaw-opencode task "Add login endpoint using the User model"
-openclaw-opencode task "Write unit tests for login endpoint"
+# All tasks share context (async mode requires callback options)
+openclaw-opencode task "Create User model with email/password fields" \
+  --agent-id myagent --channel telegram --to @username
+openclaw-opencode task "Add login endpoint using the User model" \
+  --agent-id myagent --channel telegram --to @username
+openclaw-opencode task "Write unit tests for login endpoint" \
+  --agent-id myagent --channel telegram --to @username
 ```
 
 ### Pattern 2: Parallel Independent Tasks
@@ -185,11 +147,13 @@ openclaw-opencode task "Write unit tests for login endpoint"
 For unrelated work, use `--new-session`:
 
 ```bash
-# Task 1 - Feature A
-openclaw-opencode task "Implement payment gateway" --new-session
+# Task 1 - Feature A (async mode requires callback options)
+openclaw-opencode task "Implement payment gateway" --new-session \
+  --agent-id myagent --channel telegram --to @username
 
 # Task 2 - Feature B (unrelated)
-openclaw-opencode task "Fix homepage CSS" --new-session
+openclaw-opencode task "Fix homepage CSS" --new-session \
+  --agent-id myagent --channel telegram --to @username
 ```
 
 ### Pattern 3: Blocking for Immediate Results
@@ -210,8 +174,9 @@ openclaw-opencode task "Review PR #123 for security issues" --wait
 # Done with Project A
 openclaw-opencode session --clear
 
-# Start Project B
-openclaw-opencode task "Setup project structure" --directory ./project-b
+# Start Project B (async mode requires callback options)
+openclaw-opencode task "Setup project structure" --directory ./project-b \
+  --agent-id myagent --channel telegram --to @username
 ```
 
 ## Workflow Examples
@@ -219,10 +184,11 @@ openclaw-opencode task "Setup project structure" --directory ./project-b
 ### Code Review Workflow
 
 ```bash
-# Request review (non-blocking)
+# Request review (non-blocking) - requires callback options
 openclaw-opencode task "Review src/auth/* for security vulnerabilities" \
   --agent-id reviewer \
-  --channel code-reviews
+  --channel telegram \
+  --to @username
 
 # Later: check status if needed
 openclaw-opencode status task-xyz789
@@ -231,14 +197,17 @@ openclaw-opencode status task-xyz789
 ### Feature Development Workflow
 
 ```bash
-# 1. Create feature
-openclaw-opencode task "Add user registration endpoint with validation"
+# 1. Create feature (async mode requires callback options)
+openclaw-opencode task "Add user registration endpoint with validation" \
+  --agent-id myagent --channel telegram --to @username
 
 # 2. Add related functionality
-openclaw-opencode task "Add email verification for new registrations"
+openclaw-opencode task "Add email verification for new registrations" \
+  --agent-id myagent --channel telegram --to @username
 
 # 3. Test it
-openclaw-opencode task "Write integration tests for registration flow"
+openclaw-opencode task "Write integration tests for registration flow" \
+  --agent-id myagent --channel telegram --to @username
 
 # 4. Clear session when done
 openclaw-opencode session --clear
@@ -247,11 +216,12 @@ openclaw-opencode session --clear
 ### Bug Fix Workflow
 
 ```bash
-# Quick blocking fix
+# Quick blocking fix (no callback options needed with --wait)
 openclaw-opencode task "Fix null pointer exception in login handler" --wait
 
-# Or non-blocking for complex fixes
-openclaw-opencode task "Investigate memory leak in data processing pipeline"
+# Or non-blocking for complex fixes (requires callback options)
+openclaw-opencode task "Investigate memory leak in data processing pipeline" \
+  --agent-id myagent --channel telegram --to @username
 ```
 
 ## Output Format
@@ -327,6 +297,6 @@ Error: Callback failed: 401 Unauthorized
 
 ## Related Resources
 
-- [OpenCode Documentation](https://opencode.ai)
+- [OpenCode Documentation](https://opencode.ai/docs/server/)
 - [Plugin Repository](https://github.com/LaceLetho/opencode-plugin-openclaw)
 - [CLI Repository](https://github.com/LaceLetho/openclaw-opencode-cli)
