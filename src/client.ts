@@ -57,12 +57,20 @@ export async function dispatchTask(
     logger.session("reusing", sessionId, { directory: options?.directory });
   } else {
     // Create new session
-    logger.info("Creating new session", { directory: options?.directory });
+    logger.warn("[CLIENT_DEBUG] Creating new session", { directory: options?.directory });
 
     const createStart = Date.now();
-    const createResult = await client.session.create(
-      options?.directory ? { directory: options.directory } : undefined
-    );
+    const createParams = options?.directory ? { directory: options.directory } : undefined;
+    logger.warn("[CLIENT_DEBUG] SDK session.create params", { createParams });
+
+    const createResult = await client.session.create(createParams);
+
+    logger.warn("[CLIENT_DEBUG] SDK session.create response", {
+      error: createResult.error,
+      hasData: !!createResult.data,
+      sessionId: createResult.data?.id,
+      sessionDirectory: createResult.data?.directory,
+    });
 
     logger.http("POST", "/session", createResult.error ? 500 : 200, Date.now() - createStart);
 
@@ -79,6 +87,13 @@ export async function dispatchTask(
 
     sessionId = session.id;
     isNewSession = true;
+    logger.warn("[CLIENT_DEBUG] Session created", {
+      sessionId,
+      requestedDirectory: options?.directory,
+      actualDirectory: session.directory,
+      directoryMatch: options?.directory === session.directory,
+      duration: Date.now() - createStart,
+    });
     logger.session("created", sessionId, { directory: session.directory, duration: Date.now() - createStart });
   }
 

@@ -87,10 +87,25 @@ export const taskCommand = new Command("task")
         sessionId = existingSessionId;
         logger.session("reusing", sessionId, { directory: workingDirectory });
       } else {
-        logger.info("Creating new session", { directory: workingDirectory });
-        const createResult = await client.session.create(
-          workingDirectory ? { directory: workingDirectory } : undefined
-        );
+        logger.warn("[DIRECTORY_DEBUG] Creating new session", {
+          workingDirectory,
+          optionsDirectory: options.directory,
+          envWorkspace: process.env.OPENCODE_WORKSPACE,
+          hasWorkingDirectory: !!workingDirectory,
+        });
+        console.log(`[DIRECTORY_DEBUG] Creating session with directory: ${workingDirectory || "undefined"}`);
+
+        const createParams = workingDirectory ? { directory: workingDirectory } : undefined;
+        logger.warn("[DIRECTORY_DEBUG] SDK create params", { createParams });
+
+        const createResult = await client.session.create(createParams);
+
+        logger.warn("[DIRECTORY_DEBUG] SDK create result", {
+          error: createResult.error,
+          hasData: !!createResult.data,
+          sessionId: createResult.data?.id,
+          sessionDirectory: createResult.data?.directory,
+        });
 
         if (createResult.error) {
           logger.error("Failed to create session", { error: createResult.error });
@@ -104,6 +119,12 @@ export const taskCommand = new Command("task")
 
         sessionId = session.id;
         isNewSession = true;
+        logger.warn("[DIRECTORY_DEBUG] Session created", {
+          sessionId,
+          requestedDirectory: workingDirectory,
+          actualDirectory: session.directory,
+          directoryMatch: workingDirectory === session.directory,
+        });
         logger.session("created", sessionId, { directory: session.directory });
       }
 
