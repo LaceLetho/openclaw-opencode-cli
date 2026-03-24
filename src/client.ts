@@ -183,6 +183,7 @@ export interface CallbackConfig {
   channel?: string;
   deliver?: boolean;
   to?: string;  // Target recipient for message forwarding
+  prompt?: string;
 }
 
 /**

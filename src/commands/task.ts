@@ -182,6 +182,7 @@ export const taskCommand = new Command("task")
             channel: options.channel,
             deliver: true,
             to: options.to,
+            prompt,
           };
           logger.info("Callback config prepared", {
             url: callbackConfig.url,
