@@ -36,9 +36,14 @@ export const taskCommand = new Command("task")
     }
 
     try {
+      // Determine working directory: CLI option > environment variable > undefined
+      // Use ?? to allow empty string as a valid directory value
+      const workingDirectory = options.directory ?? process.env.OPENCODE_WORKSPACE;
+
       logger.info("Task command started", {
         hasDirectory: !!options.directory,
         hasWorkspaceEnv: !!process.env.OPENCODE_WORKSPACE,
+        workingDirectory,
         wait: options.wait,
         newSession: options.newSession,
       });
@@ -47,11 +52,8 @@ export const taskCommand = new Command("task")
         url: process.env.OPENCODE_URL,
         username: process.env.OPENCODE_USERNAME,
         password: process.env.OPENCODE_PASSWORD,
+        directory: workingDirectory,
       });
-
-      // Determine working directory: CLI option > environment variable > undefined
-      // Use ?? to allow empty string as a valid directory value
-      const workingDirectory = options.directory ?? process.env.OPENCODE_WORKSPACE;
 
       // Check for active session
       const activeSession = getActiveSession();

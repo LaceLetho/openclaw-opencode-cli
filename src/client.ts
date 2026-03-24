@@ -5,17 +5,20 @@ export interface OpenCodeConfig {
   url?: string;
   username?: string;
   password?: string;
+  directory?: string;
 }
 
 export function createClient(config: OpenCodeConfig): OpencodeClient {
   const url = config.url || process.env.OPENCODE_URL;
   const username = config.username || process.env.OPENCODE_USERNAME || "opencode";
   const password = config.password || process.env.OPENCODE_PASSWORD;
+  const directory = config.directory || process.env.OPENCODE_WORKSPACE;
 
   logger.debug("Creating OpenCode client", {
     hasUrl: !!url,
     hasPassword: !!password,
     username,
+    directory,
   });
 
   if (!url) {
@@ -32,10 +35,11 @@ export function createClient(config: OpenCodeConfig): OpencodeClient {
   const authString = `${username}:${password}`;
   const authHeader = `Basic ${Buffer.from(authString).toString("base64")}`;
 
-  logger.info("OpenCode client initialized", { baseUrl: url });
+  logger.info("OpenCode client initialized", { baseUrl: url, directory });
 
   return createOpencodeClient({
     baseUrl: url,
+    directory,
     headers: {
       Authorization: authHeader,
     },
